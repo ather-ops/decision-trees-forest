@@ -1,6 +1,4 @@
 # Project 1: Drug Classifier - Decision Tree from Scratch
-# Basic Version - Using Actual Data
-
 # Step 1: Import libraries
 import pandas as pd
 import numpy as np
@@ -65,7 +63,7 @@ print("="*40)
 print(f"Train size: {len(X_train)}")
 print(f"Test size: {len(X_test)}")
 
-# Step 8: Simple decision tree based on Na_to_K (from the data pattern)
+# Step 8: Simple decision tree based on Na_to_K 
 def predict_drug(x):
     # x[0]=Age, x[1]=Sex, x[2]=BP, x[3]=Cholesterol, x[4]=Na_to_K
     
