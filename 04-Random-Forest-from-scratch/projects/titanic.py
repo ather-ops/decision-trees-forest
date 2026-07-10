@@ -31,6 +31,7 @@ df["Embarked"] = df["Embarked"].map({label: idx for idx, label in enumerate(df["
 # Step 6: Target and feature
 X = df.drop(["Survived"], axis=1).values  
 y = df["Survived"].values
+feature_names = df.drop(["Survived"], axis=1).columns
 
 # Step 7: Train test split from scratch
 def train_test_split_scratch(X, y, test_size=0.2, random_state=42):
@@ -229,3 +230,88 @@ class RandomForestScracth:
 rf = RandomForestScracth(n_estimators=10, max_depth=5, min_samples=5)
 rf.fit(X_train, y_train)
 print("Random Forest from Scratch Implementation Completed")
+
+# Step 13:  Train the model
+model=RandomForestScracth(
+    n_estimators=100,
+    max_depth=5,
+    min_samples=5,
+    random_state=42
+)
+model.fit(X_train,y_train)
+
+# Step 14: Predictions
+y_pred=model.predict(X_test)
+
+# Step 15: Evaluation
+def accuracy_score_scratch(y_true,y_pred):
+    return np.mean(y_true == y_pred)
+
+def confusion_matrix_scratch(y_true,y_pred):
+    matrix=np.zeros((2,2), dtype=int)
+    for actual, predicted in zip(y_true,y_pred):
+        matrix[int(actual), int(predicted)] += 1
+    return matrix
+
+def classification_report_scratch(y_true,y_pred):
+    report={}
+    for label in [0,1]:
+        tp=np.sum((y_pred == label) & (y_true == label))
+        fp=np.sum((y_pred == label) & (y_true != label))
+        fn=np.sum((y_pred != label) & (y_true == label))
+
+        precision=tp/(tp+fp) if (tp+fp) > 0 else 0
+        recall=tp/(tp+fn) if (tp+fn) > 0 else 0
+
+        f1=(
+            2*precision*recall/(precision + recall)
+            if (precision+recall) > 0 else 0
+        )
+
+        report[label]={
+            "precision":precision,
+            "recall":recall,
+            "f1-score":f1
+        }
+    return report
+accuracy=accuracy_score_scratch(y_test,y_pred)
+print("Accuracy:",accuracy)
+print("confusion matrix:\n",confusion_matrix_scratch(y_test,y_pred))
+print("classification report :\n",classification_report_scratch(y_test,y_pred))
+
+# Step 16: OOB Score
+print("OOB Score:",model.oob_score)
+
+# Step 17: Feature Importance
+importances=model.feature_importance(X.shape[1])
+
+importance_df=pd.DataFrame({
+    "Feature":feature_names,
+    "Importance":importances
+})
+
+importance_df=importance_df.sort_values(
+    by="Importance",
+    ascending=False
+)
+
+print("feature importance:\n",importance_df)
+
+# Step 18:Feature importance visualisation
+plt.figure(figsize=(8,5))
+plt.barh(
+    importance_df["Feature"],
+    importance_df["Importance"]
+)
+plt.xlabel("Importance")
+plt.ylabel("Features")
+plt.title("Random Forest(From scratch)")
+plt.gca().invert_yaxis()
+plt.show()
+
+# Step 19:
+train_accuracy=model.score(X_train,y_train)
+test_accuracy=model.score(X_test,y_test)
+print(f"Train accuracy:{train_accuracy:.4f}")
+print(f"Test accuracy:{test_accuracy:.4f}")
+print("Complete Titanic project (fromscratch)")
