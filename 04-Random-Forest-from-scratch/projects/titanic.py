@@ -149,3 +149,83 @@ predictions = clf.predict(X_test)
 
 accuracy = np.sum(predictions == y_test) / len(y_test)
 print(f"Decision Tree Accuracy from Scratch: {accuracy * 100:.2f}%")
+
+# Step 12: Random forest scratch
+class RandomForestScracth:
+    def __init__(self,n_estimators=100,max_depth=5, min_samples=5, random_state=42):
+        self.n_estimators=n_estimators
+        self.max_depth=max_depth
+        self.min_samples=min_samples
+        self.random_state=random_state
+        self.trees=[]
+        self.oob_predictions=None
+        self.oob_score=None
+    def fit(self,X,y):
+        np.random.seed(self.random_state)
+        n_samples,n_total_features=X.shape
+        n_features_per_tree=int(np.sqrt(n_total_features))
+        self.trees=[]
+
+        # Track ooB votes for each sample
+        oob_votes=np.zeros((n_samples,2))
+
+        for _ in range(self.n_estimators):
+            sample_indices=np.random.choice(n_samples, n_samples, replace=True)
+
+            oob_indices=np.setdiff1d(
+                np.arange(n_samples),sample_indices
+            )
+            X_samples=X[sample_indices]
+            y_samples=y[sample_indices]
+
+            tree=decisionTree(max_depth=self.max_depth,
+                              min_samples_leaf=self.min_samples,
+                              n_features=n_features_per_tree)
+            tree.fit(X_samples,y_samples)
+            self.trees.append(tree)
+
+            if len(oob_indices) >0:
+                oob_preds=tree.predict(X[oob_indices])
+
+                for idx,pred in zip(oob_indices,oob_preds):
+                    oob_votes[idx,int(pred)] += 1
+            
+        # Compute oob score
+        has_votes=oob_votes.sum(axis=1)>0
+        oob_final_preds=np.argmax(oob_votes[has_votes],axis=1)
+
+        self.oob_score=np.mean(oob_final_preds==y[has_votes])
+
+    def predict(self, X):
+        tree_predict=np.array([tree.predict(X) for tree in self.trees])
+
+        majority_votes=[]
+        for sample_predictions in tree_predict.T:
+            values, counts=np.unique(sample_predictions, return_counts=True)
+            majority_votes.append(values[np.argmax(counts)])
+        return np.array(majority_votes)
+
+    def score(self,X,y):
+        predictions=self.predict(X)
+        return np.mean(predictions==y)
+
+    def feature_importance(self,n_total_features):
+        importances=np.zeros(n_total_features)
+
+        for tree in self.trees:
+            self._accumulate_importance(tree.root, importances)
+        if importances.sum() >0:
+            importances=importances/importances.sum()
+
+        return importances
+
+    def _accumulate_importance(self,node,importances):
+        if node is None or node.value is not None:
+            return 
+        importances[node.feature]+=1
+        self._accumulate_importance(node.left,importances)
+        self._accumulate_importance(node.right,importances)
+
+rf = RandomForestScracth(n_estimators=10, max_depth=5, min_samples=5)
+rf.fit(X_train, y_train)
+print("Random Forest from Scratch Implementation Completed")
